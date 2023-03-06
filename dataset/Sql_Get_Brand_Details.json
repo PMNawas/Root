@@ -1,0 +1,46 @@
+{
+	"name": "Sql_Get_Brand_Details",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "TGC_SQLServer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "Brand",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "location",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Status",
+				"type": "nvarchar"
+			},
+			{
+				"name": "APPID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Secret",
+				"type": "nvarchar"
+			},
+			{
+				"name": "APIKey",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "zn_api_config"
+		}
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

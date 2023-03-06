@@ -1,0 +1,24 @@
+{
+	"name": "Trg_ZNSales_Daily",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "ZN Sales Integration Main",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2023-03-03T08:00:00",
+				"timeZone": "Arabian Standard Time"
+			}
+		}
+	}
+}

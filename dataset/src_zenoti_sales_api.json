@@ -1,0 +1,36 @@
+{
+	"name": "src_zenoti_sales_api",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Zenoti_Sales_API",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"center_id": {
+				"type": "string"
+			},
+			"start_date": {
+				"type": "string"
+			},
+			"end_date": {
+				"type": "string"
+			},
+			"status": {
+				"type": "string"
+			},
+			"item_type": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('https://api.zenoti.com/v1/sales/salesreport?center_id=',dataset().center_id,'&start_date=',dataset().start_date,'&end_date=',dataset().end_date,'&status=',dataset().status,'&item_type=',dataset().item_type)",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}

@@ -1,0 +1,272 @@
+{
+	"name": "Service master integration",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Brand Details",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": "SELECT [Brand]\n      ,[Type]\n      ,[location]\n      ,[Status]\n      ,[APPID]\n      ,[Secret]\n      ,[APIKey]\n      ,[Def_Center]\n  FROM [dbo].[zn_api_config] Where [Status]='TRUE'",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "Sql_Get_Brand_Details",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach Brand",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Brand Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Brand Details').output.value",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"additionalHeaders": {
+										"Authorization": "Bearer AN:1847|$ARD#MiXBZc9eOvNxWoyQ3qQAYYP3OIP1pKz0eGSJpyO6Kq7eJFdgH8rHvavCW59bFt/haeIIXEGyVFIBMbyOXTbrlXan7FWPRf5YYKeusk5vHO+a9iwtS9FeaFjXLpwRMD9yE/UjRVkOGbKYQPanaiJytItjEGoBDbmAr1yChGUcgfEBsbg2Mw909+D7NKLMzwUqwY4aTzzPj/Pf3B6XI/ENST7Upm8DFOjH3X6ETpjqFEwKNf3duI3u13Q8gREA0pHtSdgoRwGiX4tJRkgwuny+MvOtPl/W+g02K4pO1Cz6RYaIJ3Jos/7dLSyQ9jkxnT1WQR4soZ6FE3i/zGAa+NLvlP3Y9oNm3O1QeE+/yBe/Bu0g8eIEWqaSk/g5Qx6BOGCjfLrXvkvfE+QIDWsJctAZoRKsRpxhr8OT606pU0hLlprmdIUDZf+exzk9eysCtzHWSebQ8baPFI0A3vFHIy7KBlShLfBdf7Q8Zo7oKCUE8C6rPyH+qLhkbXiVSK+U+T9YyeHYJ4OhHgttM9CWRDkh7EKNMv7pyDPkTbQnCuOh/xuzEPbsoU0IicsG3BKi737siq30SccxRkYsb1THN2YWtNbNjp68Mon5W9j0pMNMUwhUpMUhNLr4teOSpRm+D740CoTDXNfRUkwGLiDF8dajGFPhIhirD6HaqJNWi2JkRpaplVu1SMtPdhfVuRFgS7QkQ41nObDf19osY4McD7ukQa1l2bi0Cnc57wRHbyuRn4nnLWQ8uTP1bVuQ+TUU4huGGOv16uQ0D6DojuywUqbvHgK/2qMpcV13Cr6QVor/aHqIenPq1nBvcPWii5I3o1qMkeKTu697LFGzHMgdGwFRLWGlmiFR0QRN6w784TTJGiYTBDQbbBTo5CzAFTVrcKgMC+lvJyO+7xtuSRQtbqMvA3j2+tPucvpHWjyIa6JtYw33CzklkrlP98oBmgtg9QPujr5tIbwoU5hlkHPW4xuh+f9tMIOuLFDRjBSxfUSuprjo0hs5W5DjZZou"
+									},
+									"paginationRules": {
+										"supportRFC5988": "true"
+									}
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"tableOption": "autoCreate",
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "['id']"
+											},
+											"sink": {
+												"name": "id",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['code']"
+											},
+											"sink": {
+												"name": "code",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['name']"
+											},
+											"sink": {
+												"name": "name",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['description']"
+											},
+											"sink": {
+												"name": "description",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['duration']"
+											},
+											"sink": {
+												"name": "duration",
+												"type": "Int64"
+											}
+										},
+										{
+											"source": {
+												"path": "['recovery_time']"
+											},
+											"sink": {
+												"name": "recovery_time",
+												"type": "Int64"
+											}
+										},
+										{
+											"source": {
+												"path": "['price_info']['currency_id']"
+											},
+											"sink": {
+												"name": "currency_id",
+												"type": "Int64"
+											}
+										},
+										{
+											"source": {
+												"path": "['price_info']['sale_price']"
+											},
+											"sink": {
+												"name": "sale_price",
+												"type": "Double"
+											}
+										},
+										{
+											"source": {
+												"path": "['price_info']['tax_id']"
+											},
+											"sink": {
+												"name": "tax_id",
+												"type": "String"
+											}
+										},
+										{
+											"source": {
+												"path": "['price_info']['ssg']"
+											}
+										},
+										{
+											"source": {
+												"path": "['price_info']['include_tax']"
+											}
+										},
+										{
+											"source": {
+												"path": "['price_info']['demand_group_id']"
+											}
+										},
+										{
+											"source": {
+												"path": "['additional_info']"
+											}
+										},
+										{
+											"source": {
+												"path": "['catalog_info']"
+											}
+										},
+										{
+											"source": {
+												"path": "['variants_info']"
+											}
+										},
+										{
+											"source": {
+												"path": "['add_ons_info']"
+											}
+										},
+										{
+											"source": {
+												"path": "['image_paths']"
+											}
+										},
+										{
+											"source": {
+												"path": "['parallel_groups']"
+											}
+										},
+										{
+											"source": {
+												"path": "['parallel_service_groups']"
+											}
+										},
+										{
+											"source": {
+												"path": "['prerequisites_info']"
+											}
+										},
+										{
+											"source": {
+												"path": "['finishing_services_info']"
+											}
+										},
+										{
+											"source": {
+												"path": "$['page_info']['total']"
+											}
+										},
+										{
+											"source": {
+												"path": "$['page_info']['page']"
+											}
+										},
+										{
+											"source": {
+												"path": "$['page_info']['size']"
+											}
+										}
+									],
+									"collectionReference": "$['services']"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "RestResource1",
+									"type": "DatasetReference",
+									"parameters": {
+										"Centerid": {
+											"value": "@item().Def_Center",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "AzureSqlTable1",
+									"type": "DatasetReference"
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2023-03-01T08:50:44Z"
+	},
+	"type": "Microsoft.Synapse/workspaces/pipelines"
+}

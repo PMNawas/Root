@@ -1,0 +1,24 @@
+{
+	"name": "RestResource1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "Zenoti_Sales_API",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Centerid": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('https://api.zenoti.com/v1/Centers/',dataset().Centerid,'/services?page=1&size=10')",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.Synapse/workspaces/datasets"
+}
