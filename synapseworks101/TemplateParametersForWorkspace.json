@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "synapseworks101"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"AzureSqlDatabase_connectionString": {
+			"value": ""
+		},
+		"RestService1_password": {
+			"value": ""
+		},
+		"RestService3_password": {
+			"value": ""
+		},
+		"TGC_SQLServer_connectionString": {
+			"value": ""
+		},
+		"Zenoti_Sales_API_password": {
+			"value": ""
+		},
+		"synapseworks101-WorkspaceDefaultSqlServer_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:synapseworks101.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://demostoragea101.dfs.core.windows.net/"
+		},
+		"RestService1_properties_typeProperties_url": {
+			"value": "https://api.zenoti.com/Token"
+		},
+		"RestService1_properties_typeProperties_userName": {
+			"value": "sap"
+		},
+		"RestService2_properties_typeProperties_url": {
+			"value": "https://catfact.ninja/fact"
+		},
+		"RestService3_properties_typeProperties_url": {
+			"value": "https://api.zenoti.com/Token"
+		},
+		"RestService3_properties_typeProperties_userName": {
+			"value": "sap"
+		},
+		"Zenoti_Sales_API_properties_typeProperties_url": {
+			"value": "https://api.zenoti.com"
+		},
+		"Zenoti_Sales_API_properties_typeProperties_userName": {
+			"value": "sap"
+		},
+		"synapseworks101-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://demostoragea101.dfs.core.windows.net"
+		}
+	}
+}

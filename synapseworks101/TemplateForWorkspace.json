@@ -1,0 +1,3576 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"type": "string",
+			"metadata": "Workspace name",
+			"defaultValue": "synapseworks101"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+		},
+		"AzureSqlDatabase_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabase'"
+		},
+		"RestService1_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'RestService1'"
+		},
+		"RestService3_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'RestService3'"
+		},
+		"TGC_SQLServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'TGC_SQLServer'"
+		},
+		"Zenoti_Sales_API_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'Zenoti_Sales_API'"
+		},
+		"synapseworks101-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'synapseworks101-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:synapseworks101.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://demostoragea101.dfs.core.windows.net/"
+		},
+		"RestService1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.zenoti.com/Token"
+		},
+		"RestService1_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "sap"
+		},
+		"RestService2_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://catfact.ninja/fact"
+		},
+		"RestService3_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.zenoti.com/Token"
+		},
+		"RestService3_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "sap"
+		},
+		"Zenoti_Sales_API_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://api.zenoti.com"
+		},
+		"Zenoti_Sales_API_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "sap"
+		},
+		"synapseworks101-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://demostoragea101.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/Load Zenoti Sales API to SQL DB')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Access Token",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/tokens",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"account_name": "1847",
+								"user_name": "Nawas",
+								"password": "Kodathoor@1",
+								"grant_type": "password",
+								"app_id": "E230CE9C-75BD-4BCA-AA5E-A17CC2D28BC1",
+								"app_secret": "e84c02d1cefe4011ba671dd45dd4862abc47fca836ed43db93892a7afeff364e",
+								"device_id": "biadmin-azuresynpase-workfolow"
+							}
+						}
+					},
+					{
+						"name": "Get Centers List",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/centers",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@variables('var_access_token')",
+									"type": "Expression"
+								},
+								"Accept": "application/json"
+							}
+						}
+					},
+					{
+						"name": "Loop Each Center Sales Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Centers List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Centers List').output.centers",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Zenoti Sales API to SQL DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"Authorization": {
+													"value": "@variables('var_access_token')",
+													"type": "Expression"
+												}
+											},
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "SqlServerSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": true,
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "src_zenoti_sales_api",
+											"type": "DatasetReference",
+											"parameters": {
+												"center_id": {
+													"value": "@item().id",
+													"type": "Expression"
+												},
+												"start_date": "2023-02-26",
+												"end_date": "2023-02-26",
+												"status": "1",
+												"item_type": "7"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "tgt_zenoti_sales_tbl",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Set Access Token",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_access_token",
+							"value": {
+								"value": "@concat('Bearer ',activity('Get Access Token').output.credentials.access_token )",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"var_access_token": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "ZN Integrtion Backup"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-03T04:53:57Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/datasets/src_zenoti_sales_api')]",
+				"[concat(variables('workspaceId'), '/datasets/tgt_zenoti_sales_tbl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Pipeline 1')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Access Token",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/tokens",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"account_name": "1847",
+								"user_name": "Nawas",
+								"password": "Kodathoor@1",
+								"grant_type": "password",
+								"app_id": "E230CE9C-75BD-4BCA-AA5E-A17CC2D28BC1",
+								"app_secret": "e84c02d1cefe4011ba671dd45dd4862abc47fca836ed43db93892a7afeff364e",
+								"device_id": "biadmin-azuresynpase-workfolow"
+							}
+						}
+					},
+					{
+						"name": "Get Centers List",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/centers",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@variables('var_access_token')",
+									"type": "Expression"
+								},
+								"Accept": "application/json"
+							}
+						}
+					},
+					{
+						"name": "Loop Each Center Sales Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Centers List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Centers List').output.centers",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Zenoti Sales API to SQL DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"Authorization": {
+													"value": "@variables('var_access_token')",
+													"type": "Expression"
+												}
+											},
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "SqlServerSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": true,
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "['invoice_no']"
+													},
+													"sink": {
+														"name": "invoice_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['receipt_no']"
+													},
+													"sink": {
+														"name": "receipt_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_id']"
+													},
+													"sink": {
+														"name": "guest_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_name']"
+													},
+													"sink": {
+														"name": "guest_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_code']"
+													},
+													"sink": {
+														"name": "guest_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['sold_on']"
+													},
+													"sink": {
+														"name": "sold_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['serviced_on']"
+													},
+													"sink": {
+														"name": "serviced_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_name']"
+													},
+													"sink": {
+														"name": "center_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_code']"
+													},
+													"sink": {
+														"name": "center_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "$['center_sales_report'][0]['item']['type']"
+													},
+													"sink": {
+														"name": "type",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['name']"
+													},
+													"sink": {
+														"name": "item_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['code']"
+													},
+													"sink": {
+														"name": "item_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['quantity']"
+													},
+													"sink": {
+														"name": "quantity",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['unit_price']"
+													},
+													"sink": {
+														"name": "unit_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['sale_price']"
+													},
+													"sink": {
+														"name": "sale_price",
+														"type": "Decimal"
+													}
+												}
+											],
+											"collectionReference": "$['center_sales_report']"
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "src_zenoti_sales_api",
+											"type": "DatasetReference",
+											"parameters": {
+												"center_id": {
+													"value": "@item().id",
+													"type": "Expression"
+												},
+												"start_date": "2023-02-25",
+												"end_date": "2023-02-25",
+												"status": "1",
+												"item_type": "7"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "tgt_zenoti_sales_tbl",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Set Access Token",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_access_token",
+							"value": {
+								"value": "@concat('Bearer ',activity('Get Access Token').output.credentials.access_token )",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"var_access_token": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "ZN Integrtion Backup"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-03T04:54:08Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/datasets/src_zenoti_sales_api')]",
+				"[concat(variables('workspaceId'), '/datasets/tgt_zenoti_sales_tbl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Service master integration')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Brand Details",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "SELECT [Brand]\n      ,[Type]\n      ,[location]\n      ,[Status]\n      ,[APPID]\n      ,[Secret]\n      ,[APIKey]\n      ,[Def_Center]\n  FROM [dbo].[zn_api_config] Where [Status]='TRUE'",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Sql_Get_Brand_Details",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach Brand",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Brand Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Brand Details').output.value",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Copy data1",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"Authorization": "Bearer AN:1847|$ARD#MiXBZc9eOvNxWoyQ3qQAYYP3OIP1pKz0eGSJpyO6Kq7eJFdgH8rHvavCW59bFt/haeIIXEGyVFIBMbyOXTbrlXan7FWPRf5YYKeusk5vHO+a9iwtS9FeaFjXLpwRMD9yE/UjRVkOGbKYQPanaiJytItjEGoBDbmAr1yChGUcgfEBsbg2Mw909+D7NKLMzwUqwY4aTzzPj/Pf3B6XI/ENST7Upm8DFOjH3X6ETpjqFEwKNf3duI3u13Q8gREA0pHtSdgoRwGiX4tJRkgwuny+MvOtPl/W+g02K4pO1Cz6RYaIJ3Jos/7dLSyQ9jkxnT1WQR4soZ6FE3i/zGAa+NLvlP3Y9oNm3O1QeE+/yBe/Bu0g8eIEWqaSk/g5Qx6BOGCjfLrXvkvfE+QIDWsJctAZoRKsRpxhr8OT606pU0hLlprmdIUDZf+exzk9eysCtzHWSebQ8baPFI0A3vFHIy7KBlShLfBdf7Q8Zo7oKCUE8C6rPyH+qLhkbXiVSK+U+T9YyeHYJ4OhHgttM9CWRDkh7EKNMv7pyDPkTbQnCuOh/xuzEPbsoU0IicsG3BKi737siq30SccxRkYsb1THN2YWtNbNjp68Mon5W9j0pMNMUwhUpMUhNLr4teOSpRm+D740CoTDXNfRUkwGLiDF8dajGFPhIhirD6HaqJNWi2JkRpaplVu1SMtPdhfVuRFgS7QkQ41nObDf19osY4McD7ukQa1l2bi0Cnc57wRHbyuRn4nnLWQ8uTP1bVuQ+TUU4huGGOv16uQ0D6DojuywUqbvHgK/2qMpcV13Cr6QVor/aHqIenPq1nBvcPWii5I3o1qMkeKTu697LFGzHMgdGwFRLWGlmiFR0QRN6w784TTJGiYTBDQbbBTo5CzAFTVrcKgMC+lvJyO+7xtuSRQtbqMvA3j2+tPucvpHWjyIa6JtYw33CzklkrlP98oBmgtg9QPujr5tIbwoU5hlkHPW4xuh+f9tMIOuLFDRjBSxfUSuprjo0hs5W5DjZZou"
+											},
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": false,
+											"tableOption": "autoCreate",
+											"disableMetricsCollection": false
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "['id']"
+													},
+													"sink": {
+														"name": "id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['code']"
+													},
+													"sink": {
+														"name": "code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['name']"
+													},
+													"sink": {
+														"name": "name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['description']"
+													},
+													"sink": {
+														"name": "description",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['duration']"
+													},
+													"sink": {
+														"name": "duration",
+														"type": "Int64"
+													}
+												},
+												{
+													"source": {
+														"path": "['recovery_time']"
+													},
+													"sink": {
+														"name": "recovery_time",
+														"type": "Int64"
+													}
+												},
+												{
+													"source": {
+														"path": "['price_info']['currency_id']"
+													},
+													"sink": {
+														"name": "currency_id",
+														"type": "Int64"
+													}
+												},
+												{
+													"source": {
+														"path": "['price_info']['sale_price']"
+													},
+													"sink": {
+														"name": "sale_price",
+														"type": "Double"
+													}
+												},
+												{
+													"source": {
+														"path": "['price_info']['tax_id']"
+													},
+													"sink": {
+														"name": "tax_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['price_info']['ssg']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['price_info']['include_tax']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['price_info']['demand_group_id']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['additional_info']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['catalog_info']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['variants_info']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['add_ons_info']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['image_paths']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['parallel_groups']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['parallel_service_groups']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['prerequisites_info']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "['finishing_services_info']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "$['page_info']['total']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "$['page_info']['page']"
+													},
+													"sink": {}
+												},
+												{
+													"source": {
+														"path": "$['page_info']['size']"
+													},
+													"sink": {}
+												}
+											],
+											"collectionReference": "$['services']"
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "RestResource1",
+											"type": "DatasetReference",
+											"parameters": {
+												"Centerid": {
+													"value": "@item().Def_Center",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "AzureSqlTable1",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-01T08:50:44Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/Sql_Get_Brand_Details')]",
+				"[concat(variables('workspaceId'), '/datasets/RestResource1')]",
+				"[concat(variables('workspaceId'), '/datasets/AzureSqlTable1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ZN Sales Integration Main')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Config Details",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "Select Tocken_body as body from zn_api_config where Brand in ('1847','Nbar')",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Sql_Get_Brand_Details",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach  Brand",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Config Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Config Details').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Call Pipeline by Brand",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "ZN Sales Integration V2",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"Brand_Details": {
+												"value": "@item().body",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"Brand_Details": {
+						"type": "Array"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-02T13:54:16Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/Sql_Get_Brand_Details')]",
+				"[concat(variables('workspaceId'), '/pipelines/ZN Sales Integration V2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ZN Sales Integration V1')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Access Token",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Get Config Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/tokens",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@activity('Get Config Details').output.firstRow.body",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Get Centers List",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/centers",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@variables('var_access_token')",
+									"type": "Expression"
+								},
+								"Accept": "application/json"
+							}
+						}
+					},
+					{
+						"name": "Loop Each Center Sales Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Centers List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Centers List').output.centers",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Zenoti Sales API to SQL DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"Authorization": {
+													"value": "@variables('var_access_token')",
+													"type": "Expression"
+												}
+											},
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "SqlServerSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": true,
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "['invoice_no']"
+													},
+													"sink": {
+														"name": "invoice_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['receipt_no']"
+													},
+													"sink": {
+														"name": "receipt_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_id']"
+													},
+													"sink": {
+														"name": "guest_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_name']"
+													},
+													"sink": {
+														"name": "guest_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_code']"
+													},
+													"sink": {
+														"name": "guest_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['sold_on']"
+													},
+													"sink": {
+														"name": "sold_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['serviced_on']"
+													},
+													"sink": {
+														"name": "serviced_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_name']"
+													},
+													"sink": {
+														"name": "center_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_code']"
+													},
+													"sink": {
+														"name": "center_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['type']"
+													},
+													"sink": {
+														"name": "type",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['name']"
+													},
+													"sink": {
+														"name": "item_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['code']"
+													},
+													"sink": {
+														"name": "item_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['gift_card_code']"
+													},
+													"sink": {
+														"name": "gift_card_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['quantity']"
+													},
+													"sink": {
+														"name": "quantity",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['unit_price']"
+													},
+													"sink": {
+														"name": "unit_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['sale_price']"
+													},
+													"sink": {
+														"name": "sale_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['discount']"
+													},
+													"sink": {
+														"name": "discount",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['final_sale_price']"
+													},
+													"sink": {
+														"name": "final_sale_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['total_tax']"
+													},
+													"sink": {
+														"name": "total_tax",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['tax_code']"
+													},
+													"sink": {
+														"name": "tax_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['loyalty_point_redemption']"
+													},
+													"sink": {
+														"name": "loyalty_point_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['membership_redmption']"
+													},
+													"sink": {
+														"name": "membership_redmption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['prepaid_card_redemption']"
+													},
+													"sink": {
+														"name": "prepaid_card_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['cashback_redemption']"
+													},
+													"sink": {
+														"name": "cashback_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['package_redemption']"
+													},
+													"sink": {
+														"name": "package_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['cash']"
+													},
+													"sink": {
+														"name": "cash",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['card']"
+													},
+													"sink": {
+														"name": "card",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['check']"
+													},
+													"sink": {
+														"name": "check",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['custom']"
+													},
+													"sink": {
+														"name": "custom",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['points']"
+													},
+													"sink": {
+														"name": "points",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['membership_paid']"
+													},
+													"sink": {
+														"name": "membership_paid",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['prepaid_card']"
+													},
+													"sink": {
+														"name": "prepaid_card",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['last_payment_date']"
+													},
+													"sink": {
+														"name": "last_payment_date",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['invoice_item_id']"
+													},
+													"sink": {
+														"name": "invoice_item_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['rounding_adjustment']"
+													},
+													"sink": {
+														"name": "rounding_adjustment",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['tips']"
+													},
+													"sink": {
+														"name": "tips",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['name']"
+													},
+													"sink": {
+														"name": "employee_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['code']"
+													},
+													"sink": {
+														"name": "employee_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['job_code']"
+													},
+													"sink": {
+														"name": "job_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['tags']"
+													},
+													"sink": {
+														"name": "tags",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['promotion']"
+													},
+													"sink": {
+														"name": "promotion",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['coupon_printed']"
+													},
+													"sink": {
+														"name": "coupon_printed",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['first_visit']"
+													},
+													"sink": {
+														"name": "first_visit",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['package']"
+													},
+													"sink": {
+														"name": "package",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['package_invoice']"
+													},
+													"sink": {
+														"name": "package_invoice",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['due']"
+													},
+													"sink": {
+														"name": "due",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['payment_type']"
+													},
+													"sink": {
+														"name": "payment_type",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['business_unit_name']"
+													},
+													"sink": {
+														"name": "business_unit_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['state_code']"
+													},
+													"sink": {
+														"name": "state_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['SAC']"
+													},
+													"sink": {
+														"name": "SAC",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['created_date_in_center']"
+													},
+													"sink": {
+														"name": "created_date_in_center",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['item_row_num']"
+													},
+													"sink": {
+														"name": "item_row_num",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['row_num']"
+													},
+													"sink": {
+														"name": "row_num",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['HSN']"
+													},
+													"sink": {
+														"name": "HSN",
+														"type": "String"
+													}
+												}
+											],
+											"collectionReference": "$['center_sales_report']",
+											"mapComplexValuesToString": false
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "src_zenoti_sales_api",
+											"type": "DatasetReference",
+											"parameters": {
+												"center_id": {
+													"value": "@item().id",
+													"type": "Expression"
+												},
+												"start_date": {
+													"value": "@formatDateTime(\nconvertFromUtc(addDays(utcnow(),-1),'Eastern Standard Time'),'yyyy-MM-dd')",
+													"type": "Expression"
+												},
+												"end_date": {
+													"value": "@formatDateTime(\nconvertFromUtc(addDays(utcnow(),-1),'Eastern Standard Time'),'yyyy-MM-dd')",
+													"type": "Expression"
+												},
+												"status": "1",
+												"item_type": "7"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "tgt_zenoti_sales_tbl",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Set Access Token",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_access_token",
+							"value": {
+								"value": "@concat('Bearer ',activity('Get Access Token').output.credentials.access_token )",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Get Config Details",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"sqlReaderQuery": "Select '{\"account_name\":\"1847\",\"user_name\":\"Nawas\",\"password\":\"Kodathoor@1\",\"grant_type\":\"password\",\"app_id\":\"E230CE9C-75BD-4BCA-AA5E-A17CC2D28BC1\",\"app_secret\":\"e84c02d1cefe4011ba671dd45dd4862abc47fca836ed43db93892a7afeff364e\",\"device_id\":\"biadmin-azuresynpase-workfolow\"}' as body",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "Sql_Get_Brand_Details",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": true
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"var_access_token": {
+						"type": "String"
+					},
+					"Req_Body": {
+						"type": "Array"
+					}
+				},
+				"folder": {
+					"name": "ZN Integrtion Backup"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-03T04:54:13Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/datasets/Sql_Get_Brand_Details')]",
+				"[concat(variables('workspaceId'), '/datasets/src_zenoti_sales_api')]",
+				"[concat(variables('workspaceId'), '/datasets/tgt_zenoti_sales_tbl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ZN Sales Integration V2')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Access Token",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/tokens",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@pipeline().parameters.Brand_Details",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Get Centers List",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/centers",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@variables('var_access_token')",
+									"type": "Expression"
+								},
+								"Accept": "application/json"
+							}
+						}
+					},
+					{
+						"name": "Loop Each Center Sales Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Centers List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Centers List').output.centers",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Zenoti Sales API to SQL DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"Authorization": {
+													"value": "@variables('var_access_token')",
+													"type": "Expression"
+												}
+											},
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "SqlServerSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": true,
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "['invoice_no']"
+													},
+													"sink": {
+														"name": "invoice_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['receipt_no']"
+													},
+													"sink": {
+														"name": "receipt_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_id']"
+													},
+													"sink": {
+														"name": "guest_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_name']"
+													},
+													"sink": {
+														"name": "guest_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_code']"
+													},
+													"sink": {
+														"name": "guest_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['sold_on']"
+													},
+													"sink": {
+														"name": "sold_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['serviced_on']"
+													},
+													"sink": {
+														"name": "serviced_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_name']"
+													},
+													"sink": {
+														"name": "center_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_code']"
+													},
+													"sink": {
+														"name": "center_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['type']"
+													},
+													"sink": {
+														"name": "type",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['name']"
+													},
+													"sink": {
+														"name": "item_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['code']"
+													},
+													"sink": {
+														"name": "item_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['gift_card_code']"
+													},
+													"sink": {
+														"name": "gift_card_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['quantity']"
+													},
+													"sink": {
+														"name": "quantity",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['unit_price']"
+													},
+													"sink": {
+														"name": "unit_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['sale_price']"
+													},
+													"sink": {
+														"name": "sale_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['discount']"
+													},
+													"sink": {
+														"name": "discount",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['final_sale_price']"
+													},
+													"sink": {
+														"name": "final_sale_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['total_tax']"
+													},
+													"sink": {
+														"name": "total_tax",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['tax_code']"
+													},
+													"sink": {
+														"name": "tax_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['loyalty_point_redemption']"
+													},
+													"sink": {
+														"name": "loyalty_point_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['membership_redmption']"
+													},
+													"sink": {
+														"name": "membership_redmption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['prepaid_card_redemption']"
+													},
+													"sink": {
+														"name": "prepaid_card_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['cashback_redemption']"
+													},
+													"sink": {
+														"name": "cashback_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['package_redemption']"
+													},
+													"sink": {
+														"name": "package_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['cash']"
+													},
+													"sink": {
+														"name": "cash",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['card']"
+													},
+													"sink": {
+														"name": "card",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['check']"
+													},
+													"sink": {
+														"name": "check",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['custom']"
+													},
+													"sink": {
+														"name": "custom",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['points']"
+													},
+													"sink": {
+														"name": "points",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['membership_paid']"
+													},
+													"sink": {
+														"name": "membership_paid",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['prepaid_card']"
+													},
+													"sink": {
+														"name": "prepaid_card",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['last_payment_date']"
+													},
+													"sink": {
+														"name": "last_payment_date",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['invoice_item_id']"
+													},
+													"sink": {
+														"name": "invoice_item_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['rounding_adjustment']"
+													},
+													"sink": {
+														"name": "rounding_adjustment",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['tips']"
+													},
+													"sink": {
+														"name": "tips",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['name']"
+													},
+													"sink": {
+														"name": "employee_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['code']"
+													},
+													"sink": {
+														"name": "employee_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['job_code']"
+													},
+													"sink": {
+														"name": "job_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['tags']"
+													},
+													"sink": {
+														"name": "tags",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['promotion']"
+													},
+													"sink": {
+														"name": "promotion",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['coupon_printed']"
+													},
+													"sink": {
+														"name": "coupon_printed",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['first_visit']"
+													},
+													"sink": {
+														"name": "first_visit",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['package']"
+													},
+													"sink": {
+														"name": "package",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['package_invoice']"
+													},
+													"sink": {
+														"name": "package_invoice",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['due']"
+													},
+													"sink": {
+														"name": "due",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['payment_type']"
+													},
+													"sink": {
+														"name": "payment_type",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['business_unit_name']"
+													},
+													"sink": {
+														"name": "business_unit_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['state_code']"
+													},
+													"sink": {
+														"name": "state_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['SAC']"
+													},
+													"sink": {
+														"name": "SAC",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['created_date_in_center']"
+													},
+													"sink": {
+														"name": "created_date_in_center",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['item_row_num']"
+													},
+													"sink": {
+														"name": "item_row_num",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['row_num']"
+													},
+													"sink": {
+														"name": "row_num",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['HSN']"
+													},
+													"sink": {
+														"name": "HSN",
+														"type": "String"
+													}
+												}
+											],
+											"collectionReference": "$['center_sales_report']",
+											"mapComplexValuesToString": false
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "src_zenoti_sales_api",
+											"type": "DatasetReference",
+											"parameters": {
+												"center_id": {
+													"value": "@item().id",
+													"type": "Expression"
+												},
+												"start_date": {
+													"value": "@formatDateTime(\naddDays(utcnow(),-1),'yyyy-MM-dd')",
+													"type": "Expression"
+												},
+												"end_date": {
+													"value": "@formatDateTime(\naddDays(utcnow(),-1),'yyyy-MM-dd')",
+													"type": "Expression"
+												},
+												"status": "1",
+												"item_type": "7"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "tgt_zenoti_sales_tbl",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Set Access Token",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_access_token",
+							"value": {
+								"value": "@concat('Bearer ',activity('Get Access Token').output.credentials.access_token )",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"Brand_Details": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"var_access_token": {
+						"type": "String"
+					},
+					"Req_Body": {
+						"type": "Array"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-03T04:54:20Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/datasets/src_zenoti_sales_api')]",
+				"[concat(variables('workspaceId'), '/datasets/tgt_zenoti_sales_tbl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/ZN Sales Integrtion REST')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Access Token",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/tokens",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"account_name": "1847",
+								"user_name": "Nawas",
+								"password": "Kodathoor@1",
+								"grant_type": "password",
+								"app_id": "E230CE9C-75BD-4BCA-AA5E-A17CC2D28BC1",
+								"app_secret": "e84c02d1cefe4011ba671dd45dd4862abc47fca836ed43db93892a7afeff364e",
+								"device_id": "biadmin-azuresynpase-workfolow"
+							}
+						}
+					},
+					{
+						"name": "Get Centers List",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "https://api.zenoti.com/v1/centers",
+							"connectVia": {
+								"referenceName": "AutoResolveIntegrationRuntime",
+								"type": "IntegrationRuntimeReference"
+							},
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@variables('var_access_token')",
+									"type": "Expression"
+								},
+								"Accept": "application/json"
+							}
+						}
+					},
+					{
+						"name": "Loop Each Center Sales Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Centers List",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Centers List').output.centers",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Zenoti Sales API to SQL DB",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"additionalHeaders": {
+												"Authorization": {
+													"value": "@variables('var_access_token')",
+													"type": "Expression"
+												}
+											},
+											"paginationRules": {
+												"supportRFC5988": "true"
+											}
+										},
+										"sink": {
+											"type": "SqlServerSink",
+											"writeBehavior": "insert",
+											"sqlWriterUseTableLock": true,
+											"tableOption": "autoCreate"
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "['invoice_no']"
+													},
+													"sink": {
+														"name": "invoice_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['receipt_no']"
+													},
+													"sink": {
+														"name": "receipt_no",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_id']"
+													},
+													"sink": {
+														"name": "guest_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_name']"
+													},
+													"sink": {
+														"name": "guest_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['guest']['guest_code']"
+													},
+													"sink": {
+														"name": "guest_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['sold_on']"
+													},
+													"sink": {
+														"name": "sold_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['serviced_on']"
+													},
+													"sink": {
+														"name": "serviced_on",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_name']"
+													},
+													"sink": {
+														"name": "center_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['center']['center_code']"
+													},
+													"sink": {
+														"name": "center_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['type']"
+													},
+													"sink": {
+														"name": "type",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['name']"
+													},
+													"sink": {
+														"name": "item_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['item']['code']"
+													},
+													"sink": {
+														"name": "item_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['gift_card_code']"
+													},
+													"sink": {
+														"name": "gift_card_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['quantity']"
+													},
+													"sink": {
+														"name": "quantity",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['unit_price']"
+													},
+													"sink": {
+														"name": "unit_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['sale_price']"
+													},
+													"sink": {
+														"name": "sale_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['discount']"
+													},
+													"sink": {
+														"name": "discount",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['final_sale_price']"
+													},
+													"sink": {
+														"name": "final_sale_price",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['total_tax']"
+													},
+													"sink": {
+														"name": "total_tax",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['tax_code']"
+													},
+													"sink": {
+														"name": "tax_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['loyalty_point_redemption']"
+													},
+													"sink": {
+														"name": "loyalty_point_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['membership_redmption']"
+													},
+													"sink": {
+														"name": "membership_redmption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['prepaid_card_redemption']"
+													},
+													"sink": {
+														"name": "prepaid_card_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['cashback_redemption']"
+													},
+													"sink": {
+														"name": "cashback_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['package_redemption']"
+													},
+													"sink": {
+														"name": "package_redemption",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['cash']"
+													},
+													"sink": {
+														"name": "cash",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['card']"
+													},
+													"sink": {
+														"name": "card",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['check']"
+													},
+													"sink": {
+														"name": "check",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['custom']"
+													},
+													"sink": {
+														"name": "custom",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['points']"
+													},
+													"sink": {
+														"name": "points",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['membership_paid']"
+													},
+													"sink": {
+														"name": "membership_paid",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['prepaid_card']"
+													},
+													"sink": {
+														"name": "prepaid_card",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['last_payment_date']"
+													},
+													"sink": {
+														"name": "last_payment_date",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['invoice_item_id']"
+													},
+													"sink": {
+														"name": "invoice_item_id",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['rounding_adjustment']"
+													},
+													"sink": {
+														"name": "rounding_adjustment",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['tips']"
+													},
+													"sink": {
+														"name": "tips",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['name']"
+													},
+													"sink": {
+														"name": "employee_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['code']"
+													},
+													"sink": {
+														"name": "employee_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['employee']['job_code']"
+													},
+													"sink": {
+														"name": "job_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['tags']"
+													},
+													"sink": {
+														"name": "tags",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['promotion']"
+													},
+													"sink": {
+														"name": "promotion",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['coupon_printed']"
+													},
+													"sink": {
+														"name": "coupon_printed",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['first_visit']"
+													},
+													"sink": {
+														"name": "first_visit",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['package']"
+													},
+													"sink": {
+														"name": "package",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['package_invoice']"
+													},
+													"sink": {
+														"name": "package_invoice",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['due']"
+													},
+													"sink": {
+														"name": "due",
+														"type": "Decimal"
+													}
+												},
+												{
+													"source": {
+														"path": "['payment_type']"
+													},
+													"sink": {
+														"name": "payment_type",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['business_unit_name']"
+													},
+													"sink": {
+														"name": "business_unit_name",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['state_code']"
+													},
+													"sink": {
+														"name": "state_code",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['SAC']"
+													},
+													"sink": {
+														"name": "SAC",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['created_date_in_center']"
+													},
+													"sink": {
+														"name": "created_date_in_center",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "['item_row_num']"
+													},
+													"sink": {
+														"name": "item_row_num",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "['row_num']"
+													},
+													"sink": {
+														"name": "row_num",
+														"type": "Int32"
+													}
+												},
+												{
+													"source": {
+														"path": "['HSN']"
+													},
+													"sink": {
+														"name": "HSN",
+														"type": "String"
+													}
+												}
+											],
+											"collectionReference": "$['center_sales_report']",
+											"mapComplexValuesToString": false
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "src_zenoti_sales_api",
+											"type": "DatasetReference",
+											"parameters": {
+												"center_id": {
+													"value": "@item().id",
+													"type": "Expression"
+												},
+												"start_date": {
+													"value": "@formatDateTime(\nconvertFromUtc(addDays(utcnow(),-1),'Eastern Standard Time'),'yyyy-MM-dd')",
+													"type": "Expression"
+												},
+												"end_date": {
+													"value": "@formatDateTime(\nconvertFromUtc(addDays(utcnow(),-1),'Eastern Standard Time'),'yyyy-MM-dd')",
+													"type": "Expression"
+												},
+												"status": "1",
+												"item_type": "7"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "tgt_zenoti_sales_tbl",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Set Access Token",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Access Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "var_access_token",
+							"value": {
+								"value": "@concat('Bearer ',activity('Get Access Token').output.credentials.access_token )",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"variables": {
+					"var_access_token": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "ZN Integrtion Backup"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-03T04:54:01Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]",
+				"[concat(variables('workspaceId'), '/datasets/src_zenoti_sales_api')]",
+				"[concat(variables('workspaceId'), '/datasets/tgt_zenoti_sales_tbl')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AzureSqlTable1')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "service_master_new"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/AzureSqlDatabase')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RestResource1')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Zenoti_Sales_API",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Centerid": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@concat('https://api.zenoti.com/v1/Centers/',dataset().Centerid,'/services?page=1&size=10')",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/Zenoti_Sales_API')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Sql_Get_Brand_Details')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "TGC_SQLServer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "Brand",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Type",
+						"type": "nvarchar"
+					},
+					{
+						"name": "location",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Status",
+						"type": "nvarchar"
+					},
+					{
+						"name": "APPID",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Secret",
+						"type": "nvarchar"
+					},
+					{
+						"name": "APIKey",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "zn_api_config"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/TGC_SQLServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/src_zenoti_sales_api')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Zenoti_Sales_API",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"center_id": {
+						"type": "string"
+					},
+					"start_date": {
+						"type": "string"
+					},
+					"end_date": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"item_type": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@concat('https://api.zenoti.com/v1/sales/salesreport?center_id=',dataset().center_id,'&start_date=',dataset().start_date,'&end_date=',dataset().end_date,'&status=',dataset().status,'&item_type=',dataset().item_type)",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/Zenoti_Sales_API')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/tgt_zenoti_sales_tbl')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "TGC_SQLServer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "znsales"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/TGC_SQLServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AzureDataLakeStorage1')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AzureSqlDatabase')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureSqlDatabase_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RestService1')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('RestService1_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Basic",
+					"userName": "[parameters('RestService1_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('RestService1_password')]"
+					},
+					"authHeaders": {
+						"clientid": {
+							"type": "SecureString",
+							"value": "**********"
+						}
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RestService2')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('RestService2_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/RestService3')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('RestService3_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Basic",
+					"userName": "[parameters('RestService3_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('RestService3_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/TGC_SQLServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('TGC_SQLServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Zenoti_Sales_API')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('Zenoti_Sales_API_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Basic",
+					"userName": "[parameters('Zenoti_Sales_API_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('Zenoti_Sales_API_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/synapseworks101-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('synapseworks101-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/synapseworks101-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('synapseworks101-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Trg_ZNSales_Daily')]",
+			"type": "Microsoft.Synapse/workspaces/triggers",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "ZN Sales Integration Main",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Day",
+						"interval": 1,
+						"startTime": "2023-03-03T08:00:00",
+						"timeZone": "Arabian Standard Time"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/pipelines/ZN Sales Integration Main')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/IntegrationRuntime1')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/SQL script 1')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		}
+	]
+}
