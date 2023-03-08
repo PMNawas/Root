@@ -1,0 +1,17 @@
+{
+	"name": "FileServer_MyPC",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "FileServer",
+		"typeProperties": {
+			"host": "C:\\Users\\Lenovo\\Desktop\\Data\\Azure\\Data",
+			"userId": "Nawas",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiIzYzZkOWNlNC01OWI5LTQxZGYtODM3Ny02OTg0YzJjNTQ0NmYiLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntime101",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

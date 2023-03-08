@@ -1,0 +1,120 @@
+{
+	"name": "pipeline102-foreach",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('metadata')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Foreachsource",
+									"type": "DatasetReference",
+									"parameters": {
+										"inputfile": {
+											"value": "@item().outputfile",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "foreachoutput",
+									"type": "DatasetReference",
+									"parameters": {
+										"outputfolder": {
+											"value": "@item().inputfolder",
+											"type": "Expression"
+										},
+										"filename": {
+											"value": "@item().inputfile",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"metadata": {
+				"type": "Array",
+				"defaultValue": [
+					{
+						"inputfolder": "folderout1",
+						"inputfile": "Book1.csv",
+						"outputfile": "Book1.csv"
+					},
+					{
+						"inputfolder": "folderout2",
+						"inputfile": "Book2.csv",
+						"outputfile": "Book2.csv"
+					},
+					{
+						"inputfolder": "folderout3",
+						"inputfile": "Book3.csv",
+						"outputfile": "Book3.csv"
+					}
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-02-25T12:45:47Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

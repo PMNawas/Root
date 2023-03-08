@@ -1,0 +1,38 @@
+{
+	"name": "foreachoutput",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage101",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"outputfolder": {
+				"type": "string"
+			},
+			"filename": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().filename",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().outputfolder",
+					"type": "Expression"
+				},
+				"fileSystem": "democontainer202"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

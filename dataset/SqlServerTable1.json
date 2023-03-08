@@ -1,0 +1,287 @@
+{
+	"name": "SqlServerTable1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SqlServer101",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "invoice_no",
+				"type": "nvarchar"
+			},
+			{
+				"name": "receipt_no",
+				"type": "nvarchar"
+			},
+			{
+				"name": "guest_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "guest_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "guest_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "sold_on",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "serviced_on",
+				"type": "nvarchar"
+			},
+			{
+				"name": "brand",
+				"type": "nvarchar"
+			},
+			{
+				"name": "brand_tag",
+				"type": "nvarchar"
+			},
+			{
+				"name": "center_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "center_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "gift_card_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "quantity",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "unit_price",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "sale_price",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "discount",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "final_sale_price",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "total_tax",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "tax_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "loyalty_point_redemption",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "membership_redmption",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "prepaid_card_redemption",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "cashback_redemption",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "package_redemption",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "cash",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "card",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "check",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "custom",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "points",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "membership_paid",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "prepaid_card",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "last_payment_date",
+				"type": "nvarchar"
+			},
+			{
+				"name": "invoice_item_id",
+				"type": "nvarchar"
+			},
+			{
+				"name": "rounding_adjustment",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "tips",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "emp_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "emp_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "job_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "tags",
+				"type": "nvarchar"
+			},
+			{
+				"name": "promotion",
+				"type": "nvarchar"
+			},
+			{
+				"name": "coupon_printed",
+				"type": "nvarchar"
+			},
+			{
+				"name": "first_visit",
+				"type": "nvarchar"
+			},
+			{
+				"name": "package",
+				"type": "nvarchar"
+			},
+			{
+				"name": "package_invoice",
+				"type": "nvarchar"
+			},
+			{
+				"name": "due",
+				"type": "decimal",
+				"precision": 18,
+				"scale": 2
+			},
+			{
+				"name": "payment_type",
+				"type": "nvarchar"
+			},
+			{
+				"name": "business_unit_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "state_code",
+				"type": "nvarchar"
+			},
+			{
+				"name": "SAC",
+				"type": "nvarchar"
+			},
+			{
+				"name": "created_date_in_center",
+				"type": "nvarchar"
+			},
+			{
+				"name": "item_row_num",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "row_num",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "HSN",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "sales"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

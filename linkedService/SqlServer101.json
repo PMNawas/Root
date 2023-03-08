@@ -1,0 +1,16 @@
+{
+	"name": "SqlServer101",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=DESKTOP-I739G9B\\SQLEXPRESS;initial catalog=TGC;user id=nawas",
+			"encryptedCredential": "eyJDcmVkZW50aWFsSWQiOiJmNzg2NGUzNS1mNWZkLTQ3MTgtOTZhOS05MDYwMDkwMzJmMTciLCJWZXJzaW9uIjoiMi4wIiwiQ2xhc3NUeXBlIjoiTWljcm9zb2Z0LkRhdGFQcm94eS5Db3JlLkludGVyU2VydmljZURhdGFDb250cmFjdC5DcmVkZW50aWFsU1UwNkNZMTQifQ=="
+		},
+		"connectVia": {
+			"referenceName": "integrationRuntime101",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

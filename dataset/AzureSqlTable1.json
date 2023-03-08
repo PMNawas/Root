@@ -2,7 +2,7 @@
 	"name": "AzureSqlTable1",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabase",
+			"referenceName": "AzureSqlDatabase101",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
@@ -10,8 +10,8 @@
 		"schema": [],
 		"typeProperties": {
 			"schema": "dbo",
-			"table": "service_master_new"
+			"table": "metadata"
 		}
 	},
-	"type": "Microsoft.Synapse/workspaces/datasets"
+	"type": "Microsoft.DataFactory/factories/datasets"
 }

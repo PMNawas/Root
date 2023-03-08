@@ -1,0 +1,32 @@
+{
+	"name": "trigger101",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pipeline101",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2023-02-22T06:19:00",
+				"timeZone": "Arabian Standard Time",
+				"schedule": {
+					"minutes": [
+						25
+					],
+					"hours": [
+						10
+					]
+				}
+			}
+		}
+	}
+}
